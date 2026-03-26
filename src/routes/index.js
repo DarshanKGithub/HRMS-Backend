@@ -1,38 +1,27 @@
-const express = require("express");
-const router = express.Router();
-
+const router = require("express").Router();
 const auth = require("../middlewares/authMiddleware");
+const reportCtrl = require("../controllers/reportController");
+const notificationCtrl = require("../controllers/notificationController")
+
+const validate = require("../middlewares/authMiddleware");
+const { loginSchema } = require("../validators/authValidator");
 
 const authCtrl = require("../controllers/authController");
-const empCtrl = require("../controllers/employeeController");
 const attCtrl = require("../controllers/attendanceController");
-const leaveCtrl = require("../controllers/leaveController");
 const payrollCtrl = require("../controllers/payrollController");
-const adminCtrl = require("../controllers/adminController");
 
-// Auth
-router.post("/register", authCtrl.register);
-router.post("/login", authCtrl.login);
+router.post("/login",validate(loginSchema) ,authCtrl.login);
 
-// Employee
-router.get("/profile", auth(), empCtrl.getProfile);
-router.put("/profile", auth(), empCtrl.updateProfile);
-
-// Attendance
 router.post("/clock-in", auth(), attCtrl.clockIn);
 router.post("/clock-out", auth(), attCtrl.clockOut);
-router.get("/attendance", auth(), attCtrl.getMyAttendance);
 
-// Leaves
-router.post("/leave", auth(), leaveCtrl.applyLeave);
-router.get("/leave", auth(), leaveCtrl.getMyLeaves);
+router.post("/admin/payroll", auth(["ADMIN"]), payrollCtrl.generate);
+router.get("/payroll/:id/payslip", auth(), payrollCtrl.downloadPayslip);
 
-// Payroll
-router.get("/payroll", auth(), payrollCtrl.getPayroll);
+router.get("/admin/reports/attendance", auth(["ADMIN"]), reportCtrl.attendance);
+router.get("/admin/reports/leave", auth(["ADMIN"]), reportCtrl.leave);
+router.get("/admin/reports/payroll", auth(["ADMIN"]), reportCtrl.payroll);
 
-// Admin
-router.post("/admin/employee", auth(["ADMIN"]), adminCtrl.createEmployee);
-router.get("/admin/employees", auth(["ADMIN"]), adminCtrl.getEmployees);
-router.put("/admin/leave/:id", auth(["ADMIN"]), adminCtrl.updateLeaveStatus);
+router.get("/notifications", auth(), notificationCtrl.getNotifications);
 
 module.exports = router;

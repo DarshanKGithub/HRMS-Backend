@@ -1,8 +1,6 @@
-exports.getNotifications = async (req, res) => {
-  const result = await pool.query(
-    "SELECT * FROM notifications WHERE user_id=$1 ORDER BY created_at DESC",
-    [req.user.id]
-  );
+const service = require("../services/notificationService");
 
-  res.json(result.rows);
+exports.getNotifications = async (req, res) => {
+  const data = await service.getAll(req.user.id);
+  res.json(data.rows);
 };

@@ -4,6 +4,12 @@ module.exports = (roles = []) => {
   return (req, res, next) => {
     try {
       const token = req.headers.authorization?.split(" ")[1];
+        const { error } = schema.validate(req.body);
+if (error) {
+    return res.status(400).json({
+      message: error.details[0].message,
+    });
+  }
 
       console.log("TOKEN:", token);
 

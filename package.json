@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
- "scripts": {
-  "dev": "nodemon src/server.js",
-  "start": "node src/server.js"
-},
+  "scripts": {
+    "dev": "nodemon src/server.js",
+    "start": "node src/server.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Digamberbhati/hrms-backend.git"
@@ -24,7 +24,9 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "joi": "^18.1.1",
     "jsonwebtoken": "^9.0.3",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.20.0"
   },
   "devDependencies": {
