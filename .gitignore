@@ -1,0 +1,5 @@
+# Dependencies
+node_modules/
+
+# Environment variables (contains secrets like API keys, DB passwords, etc.)
+.env
