@@ -1,30 +1,59 @@
-const pool = require("../config/db");
 const getEmployeeId = require("../utils/getEmployeeId");
+const leaveService = require("../services/leaveService");
 
-exports.applyLeave = async (req, res) => {
+exports.applyLeave = async (req, res, next) => {
   try {
     const empId = await getEmployeeId(req.user.id);
-    const { start_date, end_date, reason, type } = req.body;
-
-    const result = await pool.query(
-      `INSERT INTO leaves(employee_id, start_date, end_date, reason, type)
-       VALUES($1,$2,$3,$4,$5) RETURNING *`,
-      [empId, start_date, end_date, reason, type]
-    );
-
-    res.json(result.rows[0]);
+    const result = await leaveService.applyLeave(empId, req.body);
+    res.status(201).json(result);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    if (err.message === "Employee not found") err.status = 404;
+    if (
+      err.message === "No leave balance left" ||
+      err.message === "start_date must be less than or equal to end_date" ||
+      err.message === "Leave dates overlap with an existing request" ||
+      err.message === "Invalid leave duration" ||
+      err.message === "Invalid date format"
+    ) {
+      err.status = 422;
+    }
+    next(err);
   }
 };
 
-exports.getMyLeaves = async (req, res) => {
-  const empId = await getEmployeeId(req.user.id);
+exports.getMyLeaves = async (req, res, next) => {
+  try {
+    const empId = await getEmployeeId(req.user.id);
+    const result = await leaveService.getMyLeaves(empId, req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    if (err.message === "Employee not found") err.status = 404;
+    next(err);
+  }
+};
 
-  const result = await pool.query(
-    `SELECT * FROM leaves WHERE employee_id=$1 ORDER BY start_date DESC`,
-    [empId]
-  );
+exports.getAllLeaves = async (req, res, next) => {
+  try {
+    const result = await leaveService.getAllLeaves(req.query);
+    res.status(200).json(result);
+  } catch (err) {
+    next(err);
+  }
+};
 
-  res.json(result.rows);
+exports.updateLeaveStatus = async (req, res, next) => {
+  try {
+    const result = await leaveService.updateLeaveStatus({
+      leaveId: Number(req.params.id),
+      status: req.body.status,
+      adminUserId: req.user.id,
+    });
+
+    res.status(200).json(result);
+  } catch (err) {
+    if (err.message === "Leave request not found") err.status = 404;
+    if (err.message === "Leave request is already processed") err.status = 409;
+    if (err.message === "Insufficient leave balance during approval") err.status = 409;
+    next(err);
+  }
 };

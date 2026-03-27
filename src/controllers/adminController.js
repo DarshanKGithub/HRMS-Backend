@@ -1,13 +1,17 @@
 const authService = require("../services/authService");
 
-exports.login = async (req, res) => {
+exports.login = async (req, res, next) => {
   try {
     const token = await authService.login(
       req.body.email,
       req.body.password
     );
-    res.json({ token });
+    res.status(200).json({ token });
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    if (err.message === "User not found" || err.message === "Invalid password") {
+      err.status = 401;
+      err.message = "Invalid credentials";
+    }
+    next(err);
   }
 };

@@ -1,0 +1,369 @@
+openapi: 3.0.3
+info:
+  title: HRMS Backend API
+  version: 1.2.0
+servers:
+  - url: /api
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /login:
+    post:
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Access and refresh tokens
+  /register:
+    post:
+      summary: Register user (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+                role:
+                  type: string
+                  enum: [ADMIN, EMPLOYEE]
+      responses:
+        "201":
+          description: User created
+  /auth/refresh-token:
+    post:
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: New token pair
+  /auth/logout:
+    post:
+      summary: Logout and revoke refresh token
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: Logged out
+  /clock-in:
+    post:
+      summary: Clock in
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Attendance row
+  /clock-out:
+    post:
+      summary: Clock out
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Attendance row
+  /employee/profile:
+    get:
+      summary: Get employee profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Employee profile
+    put:
+      summary: Update employee profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                address:
+                  type: string
+      responses:
+        "200":
+          description: Employee profile updated
+  /leaves:
+    post:
+      summary: Apply leave
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [start_date, end_date, type]
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                reason:
+                  type: string
+                type:
+                  type: string
+                  enum: [PAID, UNPAID, SICK, CASUAL]
+      responses:
+        "201":
+          description: Leave request created
+  /leaves/my:
+    get:
+      summary: List current user leave requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated current user leaves
+  /admin/leaves:
+    get:
+      summary: List leaves (admin)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: employee_id
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated leaves
+  /admin/leaves/{id}/status:
+    patch:
+      summary: Approve or reject leave
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [APPROVED, REJECTED]
+      responses:
+        "200":
+          description: Updated leave
+  /admin/payroll:
+    post:
+      summary: Generate payroll
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [employee_id, month]
+              properties:
+                employee_id:
+                  type: integer
+                month:
+                  type: integer
+                  minimum: 1
+                  maximum: 12
+      responses:
+        "200":
+          description: Payroll generated
+  /payroll/{id}/payslip:
+    get:
+      summary: Download payroll payslip
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: PDF payslip
+  /admin/reports/attendance:
+    get:
+      summary: Attendance report
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: employee_name
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated attendance report
+  /admin/reports/leave:
+    get:
+      summary: Leave status report
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Leave grouped counts
+  /admin/reports/payroll:
+    get:
+      summary: Payroll report
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: true
+          schema:
+            type: integer
+        - name: employee_id
+          in: query
+          schema:
+            type: integer
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Payroll summary and rows
+  /notifications:
+    get:
+      summary: List notifications
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: is_read
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Paginated notifications
+  /notifications/{id}/read:
+    patch:
+      summary: Mark notification as read
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notification updated
+  /notifications/read-all:
+    patch:
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Notifications updated

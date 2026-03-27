@@ -1,41 +1,70 @@
 const pool = require("../config/db");
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const authService = require("../services/authService");
+const loginAttemptService = require("../services/loginAttemptService");
 
-exports.register = async (req, res) => {
-  const { email, password, role } = req.body;
+exports.register = async (req, res, next) => {
+  try {
+    const { email, password, role } = req.body;
 
-  const hashed = await bcrypt.hash(password, 10);
+    const hashed = await bcrypt.hash(password, 10);
 
-  const result = await pool.query(
-    `INSERT INTO users(email, password, role)
-     VALUES($1,$2,$3) RETURNING *`,
-    [email, hashed, role || "EMPLOYEE"]
-  );
+    const result = await pool.query(
+      `INSERT INTO users(email, password, role)
+       VALUES($1,$2,$3) RETURNING *`,
+      [email, hashed, role || "EMPLOYEE"]
+    );
 
-  res.json(result.rows[0]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === "23505") {
+      err.status = 409;
+      err.message = "User already exists";
+    }
+
+    next(err);
+  }
 };
 
-exports.login = async (req, res) => {
-  const { email, password } = req.body;
+exports.login = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+    const data = await authService.login(email, password);
+    loginAttemptService.clearFailures(email, req.ip);
 
-  const user = await pool.query(
-    "SELECT * FROM users WHERE email=$1",
-    [email]
-  );
+    res.status(200).json({
+      token: data.accessToken,
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      user: data.user,
+    });
+  } catch (err) {
+    if (err.message === "User not found" || err.message === "Invalid password") {
+      loginAttemptService.recordFailure(req.body.email, req.ip);
+      err.status = 401;
+      err.message = "Invalid credentials";
+    }
 
-  if (!user.rows.length)
-    return res.status(400).json({ msg: "User not found" });
+    next(err);
+  }
+};
 
-  const valid = await bcrypt.compare(password, user.rows[0].password);
+exports.refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken } = req.body;
+    const tokens = await authService.refreshAccessToken(refreshToken);
+    res.status(200).json(tokens);
+  } catch (err) {
+    if (!err.status) err.status = 401;
+    next(err);
+  }
+};
 
-  if (!valid)
-    return res.status(400).json({ msg: "Invalid credentials" });
-
-  const token = jwt.sign(
-    { id: user.rows[0].id, role: user.rows[0].role },
-    process.env.JWT_SECRET
-  );
-
-  res.json({ token });
+exports.logout = async (req, res, next) => {
+  try {
+    await authService.logout(req.body.refreshToken);
+    res.status(200).json({ message: "Logged out" });
+  } catch (err) {
+    next(err);
+  }
 };

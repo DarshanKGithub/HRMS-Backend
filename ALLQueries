@@ -1,0 +1,78 @@
+CREATE TABLE users(
+   id SERIAL PRIMARY KEY,
+   email VARCHAR(100) UNIQUE NOT NULL,
+   password TEXT NOT NULL,
+   role VARCHAR(20) DEFAULT 'EMPLOYEE'
+   );
+
+CREATE TABLE employees (
+    id SERIAL PRIMARY KEY,
+    user_id INT REFERENCES users(id),
+    name VARCHAR(100),
+    phone VARCHAR(15),
+    address TEXT,
+    department VARCHAR(50),
+    position VARCHAR(50),
+    salary NUMERIC
+);  
+
+CREATE TABLE attendance (
+    id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(id),
+    clock_in TIMESTAMP,
+    clock_out TIMESTAMP,
+    work_hours NUMERIC,
+    date DATE DEFAULT CURRENT_DATE
+);
+
+CREATE TABLE leaves (
+    id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(id),
+    start_date DATE,
+    end_date DATE,
+    reason TEXT,
+    type VARCHAR(20),
+    status VARCHAR(20) DEFAULT 'PENDING'
+);
+
+CREATE TABLE payroll (
+    id SERIAL PRIMARY KEY,
+    employee_id INT REFERENCES employees(id),
+    base_salary NUMERIC,
+    deductions NUMERIC,
+    net_salary NUMERIC,
+    month VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE notifications (
+    id SERIAL PRIMARY KEY,
+    user_id INT,
+    message TEXT,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE employees ADD COLUMN leave_balance INT DEFAULT 20;
+
+CREATE UNIQUE INDEX IF NOT EXISTS attendance_employee_date_unique
+ON attendance(employee_id, date);
+
+ALTER TABLE leaves
+ADD CONSTRAINT leaves_status_check
+CHECK (status IN ('PENDING', 'APPROVED', 'REJECTED'));
+
+ALTER TABLE payroll
+ADD CONSTRAINT payroll_month_check
+CHECK (month ~ '^(?:[1-9]|1[0-2])$');
+
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id SERIAL PRIMARY KEY,
+    actor_user_id INT,
+    action VARCHAR(80) NOT NULL,
+    target_type VARCHAR(50),
+    target_id INT,
+    metadata JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+   

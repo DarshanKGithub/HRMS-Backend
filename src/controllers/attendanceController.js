@@ -1,20 +1,28 @@
 const service = require("../services/attendanceService");
 const getEmpId = require("../utils/getEmployeeId");
 
-exports.clockIn = async (req, res) => {
+const mapAttendanceError = (err) => {
+  if (err.message === "Already clocked in") err.status = 409;
+  else if (err.message === "No clock-in found") err.status = 409;
+  else if (err.message === "Employee not found") err.status = 404;
+};
+
+exports.clockIn = async (req, res, next) => {
   try {
     const id = await getEmpId(req.user.id);
-    res.json(await service.clockIn(id));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    res.status(200).json(await service.clockIn(id));
+  } catch (err) {
+    mapAttendanceError(err);
+    next(err);
   }
 };
 
-exports.clockOut = async (req, res) => {
+exports.clockOut = async (req, res, next) => {
   try {
     const id = await getEmpId(req.user.id);
-    res.json(await service.clockOut(id));
-  } catch (e) {
-    res.status(400).json({ error: e.message });
+    res.status(200).json(await service.clockOut(id));
+  } catch (err) {
+    mapAttendanceError(err);
+    next(err);
   }
 };

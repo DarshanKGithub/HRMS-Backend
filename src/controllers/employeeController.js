@@ -1,26 +1,46 @@
 const pool = require("../config/db");
 
-exports.getProfile = async (req, res) => {
-  const result = await pool.query(
-    `SELECT e.*, u.email 
-     FROM employees e
-     JOIN users u ON e.user_id=u.id
-     WHERE u.id=$1`,
-    [req.user.id]
-  );
+exports.getProfile = async (req, res, next) => {
+  try {
+    const result = await pool.query(
+      `SELECT e.*, u.email
+       FROM employees e
+       JOIN users u ON e.user_id=u.id
+       WHERE u.id=$1`,
+      [req.user.id]
+    );
 
-  res.json(result.rows[0]);
+    if (!result.rows[0]) {
+      const err = new Error("Employee profile not found");
+      err.status = 404;
+      throw err;
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
 };
 
-exports.updateProfile = async (req, res) => {
-  const { phone, address } = req.body;
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const { phone, address } = req.body;
 
-  const result = await pool.query(
-    `UPDATE employees
-     SET phone=$1, address=$2
-     WHERE user_id=$3 RETURNING *`,
-    [phone, address, req.user.id]
-  );
+    const result = await pool.query(
+      `UPDATE employees
+       SET phone=$1, address=$2
+       WHERE user_id=$3 RETURNING *`,
+      [phone, address, req.user.id]
+    );
 
-  res.json(result.rows[0]);
+    if (!result.rows[0]) {
+      const err = new Error("Employee profile not found");
+      err.status = 404;
+      throw err;
+    }
+
+    res.status(200).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
 };
