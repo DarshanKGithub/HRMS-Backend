@@ -167,6 +167,56 @@ CORS_ORIGINS=http://localhost:5173,http://localhost:3000
 }
 ```
 
+### 3.1) Admin Employee Management
+
+#### POST /api/admin/employees
+- Protected (ADMIN).
+- Creates both `users` and `employees` records in one transaction.
+- Body:
+
+```json
+{
+  "email": "john.doe@example.com",
+  "password": "Employee@123",
+  "role": "EMPLOYEE",
+  "name": "John Doe",
+  "phone": "9800000000",
+  "address": "Kathmandu, Nepal",
+  "department": "Engineering",
+  "position": "Software Engineer",
+  "salary": 1200,
+  "leave_balance": 20
+}
+```
+
+- Response 201:
+
+```json
+{
+  "user": {
+    "id": 10,
+    "email": "john.doe@example.com",
+    "role": "EMPLOYEE"
+  },
+  "employee": {
+    "id": 5,
+    "user_id": 10,
+    "name": "John Doe",
+    "phone": "9800000000",
+    "address": "Kathmandu, Nepal",
+    "department": "Engineering",
+    "position": "Software Engineer",
+    "salary": "1200",
+    "leave_balance": 20
+  }
+}
+```
+
+#### GET /api/admin/employees
+- Protected (ADMIN).
+- Query params: `page`, `limit`, `search`, `department`, `role`.
+- Response follows paginated response shape.
+
 ### 4) Leave
 
 #### POST /api/leaves

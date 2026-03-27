@@ -1,4 +1,5 @@
 const pool = require("../config/db");
+const employeeService = require("../services/employeeService");
 
 exports.getProfile = async (req, res, next) => {
   try {
@@ -40,6 +41,32 @@ exports.updateProfile = async (req, res, next) => {
     }
 
     res.status(200).json(result.rows[0]);
+  } catch (err) {
+    next(err);
+  }
+};
+
+exports.createEmployee = async (req, res, next) => {
+  try {
+    const result = await employeeService.createEmployee({
+      actorUserId: req.user.id,
+      payload: req.body,
+    });
+
+    res.status(201).json(result);
+  } catch (err) {
+    if (err.message === "User already exists") {
+      err.status = 409;
+    }
+
+    next(err);
+  }
+};
+
+exports.listEmployees = async (req, res, next) => {
+  try {
+    const data = await employeeService.listEmployees(req.query);
+    res.status(200).json(data);
   } catch (err) {
     next(err);
   }

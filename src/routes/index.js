@@ -17,6 +17,10 @@ const {
 } = require("../validators/authValidator");
 const { applyLeaveSchema, updateLeaveStatusSchema } = require("../validators/leaveValidator");
 const { generatePayrollSchema } = require("../validators/payrollValidator");
+const {
+	createEmployeeSchema,
+	listEmployeesQuerySchema,
+} = require("../validators/employeeValidator");
 
 const authCtrl = require("../controllers/authController");
 const attCtrl = require("../controllers/attendanceController");
@@ -51,6 +55,18 @@ router.get("/admin/reports/payroll", auth([ROLES.ADMIN]), reportCtrl.payroll);
 
 router.get("/employee/profile", auth([ROLES.EMPLOYEE, ROLES.ADMIN]), employeeCtrl.getProfile);
 router.put("/employee/profile", auth([ROLES.EMPLOYEE, ROLES.ADMIN]), employeeCtrl.updateProfile);
+router.post(
+	"/admin/employees",
+	auth([ROLES.ADMIN]),
+	validate(createEmployeeSchema),
+	employeeCtrl.createEmployee
+);
+router.get(
+	"/admin/employees",
+	auth([ROLES.ADMIN]),
+	validate(listEmployeesQuerySchema, "query"),
+	employeeCtrl.listEmployees
+);
 
 router.post(
 	"/leaves",
