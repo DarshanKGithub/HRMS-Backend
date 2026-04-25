@@ -18,10 +18,7 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id INTEGER REFERENCES users(i
 -- 3. Update employees to link to department
 ALTER TABLE employees ADD COLUMN IF NOT EXISTS department_id INTEGER REFERENCES departments(id) ON DELETE SET NULL;
 
--- 4. Add manager role
-INSERT INTO roles (role_name) VALUES ('MANAGER') ON CONFLICT DO NOTHING;
-
--- 5. Create holidays table
+-- 4. Create holidays table
 CREATE TABLE IF NOT EXISTS holidays (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -33,7 +30,7 @@ CREATE TABLE IF NOT EXISTS holidays (
   UNIQUE(date_from, date_to)
 );
 
--- 6. Create salary components table
+-- 5. Create salary components table
 CREATE TABLE IF NOT EXISTS salary_components (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
@@ -45,7 +42,7 @@ CREATE TABLE IF NOT EXISTS salary_components (
   UNIQUE(name, component_type)
 );
 
--- 7. Create salary templates table
+-- 6. Create salary templates table
 CREATE TABLE IF NOT EXISTS salary_templates (
   id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL UNIQUE,
@@ -55,7 +52,7 @@ CREATE TABLE IF NOT EXISTS salary_templates (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Junction table: salary template components
+-- 7. Junction table: salary template components
 CREATE TABLE IF NOT EXISTS salary_template_components (
   id SERIAL PRIMARY KEY,
   template_id INTEGER NOT NULL REFERENCES salary_templates(id) ON DELETE CASCADE,
@@ -65,7 +62,7 @@ CREATE TABLE IF NOT EXISTS salary_template_components (
   UNIQUE(template_id, component_id)
 );
 
--- 9. Employee salary structure mapping
+-- 8. Employee salary structure mapping
 CREATE TABLE IF NOT EXISTS employee_salary_structures (
   id SERIAL PRIMARY KEY,
   employee_id INTEGER NOT NULL REFERENCES employees(id) ON DELETE CASCADE,
@@ -75,7 +72,7 @@ CREATE TABLE IF NOT EXISTS employee_salary_structures (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 10. Update leave calculation to exclude holidays
+-- 9. Update leave calculation to exclude holidays
 CREATE TABLE IF NOT EXISTS leave_settings (
   id SERIAL PRIMARY KEY,
   setting_key VARCHAR(100) UNIQUE NOT NULL,
