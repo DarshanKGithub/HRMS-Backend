@@ -6,11 +6,14 @@ Copy `.env.example` to `.env` and fill values.
 
 Required keys:
 - `PORT`
-- `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME`
+- `DATABASE_URL` for production, or `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD`, `DB_NAME` for local development
+- `DB_SSL` when your database requires TLS, such as Neon
 - `JWT_SECRET`, `JWT_EXPIRES_IN`
 - `JWT_REFRESH_SECRET`, `JWT_REFRESH_EXPIRES_IN`
 - `LOGIN_MAX_ATTEMPTS`, `LOGIN_LOCK_MS`
 - `CORS_ORIGINS`
+
+If `DATABASE_URL` is present, the backend will use it instead of the local connection fields.
 
 ## 2) Install
 
